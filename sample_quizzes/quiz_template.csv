@@ -1,0 +1,10 @@
+General Knowledge Quiz,Test your knowledge on various topics,medium,false
+type,question_text,option1,option2,option3,option4,correct_answer,points
+mcq,What is the capital of France?,Paris,London,Berlin,Madrid,Paris,1
+mcq,Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Saturn,Mars,1
+mcq,What is the largest ocean on Earth?,Atlantic Ocean,Indian Ocean,Arctic Ocean,Pacific Ocean,Pacific Ocean,1
+enum,What is the chemical symbol for gold?,,,,,Au,1
+enum,Who wrote the play 'Romeo and Juliet'?,,,,,William Shakespeare,2
+mcq,What is 15 × 7?,100,105,110,115,105,1
+enum,What is the smallest prime number?,,,,,2,1
+mcq,Which programming language is known as the 'language of the web'?,Python,Java,JavaScript,C++,JavaScript,2

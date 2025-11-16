@@ -1,0 +1,12 @@
+# LSQuiz .htaccess
+# Basic configuration for Apache
+
+# Enable error reporting (disable in production)
+# php_flag display_errors On
+
+# Prevent directory listing
+Options -Indexes
+
+# Default index file
+DirectoryIndex index.php
+

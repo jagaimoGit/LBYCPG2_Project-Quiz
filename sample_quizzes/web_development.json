@@ -1,0 +1,62 @@
+{
+  "title": "Web Development Fundamentals",
+  "description": "Quiz covering HTML, CSS, JavaScript, and web development basics",
+  "difficulty": "easy",
+  "is_collaborative": true,
+  "questions": [
+    {
+      "type": "mcq",
+      "question_text": "What does HTML stand for?",
+      "options": ["HyperText Markup Language", "High Tech Modern Language", "Home Tool Markup Language", "Hyperlink Text Markup Language"],
+      "correct_answer": "HyperText Markup Language",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which CSS property is used to change the text color?",
+      "options": ["font-color", "text-color", "color", "text-style"],
+      "correct_answer": "color",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What HTML tag is used to create a hyperlink?",
+      "correct_answer": "<a>",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which JavaScript method is used to select an element by ID?",
+      "options": ["getElementById()", "getElement()", "selectById()", "findElement()"],
+      "correct_answer": "getElementById()",
+      "points": 2
+    },
+    {
+      "type": "enum",
+      "question_text": "What CSS property is used to make text bold?",
+      "correct_answer": "font-weight",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "What is the correct way to include an external JavaScript file?",
+      "options": ["<script href='file.js'>", "<script src='file.js'>", "<javascript src='file.js'>", "<link src='file.js'>"],
+      "correct_answer": "<script src='file.js'>",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What HTTP status code means 'Not Found'?",
+      "correct_answer": "404",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which CSS display property value makes an element take up the full width?",
+      "options": ["inline", "block", "flex", "grid"],
+      "correct_answer": "block",
+      "points": 2
+    }
+  ]
+}
+

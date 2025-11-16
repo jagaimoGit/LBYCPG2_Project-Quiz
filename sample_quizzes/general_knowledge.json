@@ -1,0 +1,62 @@
+{
+  "title": "General Knowledge Quiz",
+  "description": "Test your knowledge on various topics including geography, history, science, and more!",
+  "difficulty": "medium",
+  "is_collaborative": false,
+  "questions": [
+    {
+      "type": "mcq",
+      "question_text": "What is the capital of France?",
+      "options": ["Paris", "London", "Berlin", "Madrid"],
+      "correct_answer": "Paris",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which planet is known as the Red Planet?",
+      "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+      "correct_answer": "Mars",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "What is the largest ocean on Earth?",
+      "options": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+      "correct_answer": "Pacific Ocean",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What is the chemical symbol for gold?",
+      "correct_answer": "Au",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "Who wrote the play 'Romeo and Juliet'?",
+      "correct_answer": "William Shakespeare",
+      "points": 2
+    },
+    {
+      "type": "mcq",
+      "question_text": "What is 15 × 7?",
+      "options": ["100", "105", "110", "115"],
+      "correct_answer": "105",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What is the smallest prime number?",
+      "correct_answer": "2",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which programming language is known as the 'language of the web'?",
+      "options": ["Python", "Java", "JavaScript", "C++"],
+      "correct_answer": "JavaScript",
+      "points": 2
+    }
+  ]
+}
+

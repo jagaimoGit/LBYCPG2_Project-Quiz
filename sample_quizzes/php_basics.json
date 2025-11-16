@@ -1,0 +1,62 @@
+{
+  "title": "PHP Basics Quiz",
+  "description": "Test your knowledge of PHP programming fundamentals",
+  "difficulty": "easy",
+  "is_collaborative": false,
+  "questions": [
+    {
+      "type": "mcq",
+      "question_text": "What does PHP stand for?",
+      "options": ["Personal Home Page", "PHP: Hypertext Preprocessor", "Private Home Page", "Program Home Page"],
+      "correct_answer": "PHP: Hypertext Preprocessor",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which function is used to output text in PHP?",
+      "options": ["print()", "echo", "output()", "display()"],
+      "correct_answer": "echo",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What is the correct way to start a PHP variable name?",
+      "correct_answer": "$",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which superglobal variable contains information about HTTP headers?",
+      "options": ["$_GET", "$_POST", "$_SERVER", "$_SESSION"],
+      "correct_answer": "$_SERVER",
+      "points": 2
+    },
+    {
+      "type": "enum",
+      "question_text": "What function is used to connect to a MySQL database using MySQLi?",
+      "correct_answer": "mysqli_connect",
+      "points": 2
+    },
+    {
+      "type": "mcq",
+      "question_text": "What is the default method of a form if not specified?",
+      "options": ["GET", "POST", "PUT", "DELETE"],
+      "correct_answer": "GET",
+      "points": 1
+    },
+    {
+      "type": "enum",
+      "question_text": "What function is used to start a PHP session?",
+      "correct_answer": "session_start",
+      "points": 1
+    },
+    {
+      "type": "mcq",
+      "question_text": "Which operator is used for concatenation in PHP?",
+      "options": ["+", ".", "&", "|"],
+      "correct_answer": ".",
+      "points": 1
+    }
+  ]
+}
+
