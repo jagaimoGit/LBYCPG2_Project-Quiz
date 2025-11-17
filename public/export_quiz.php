@@ -33,25 +33,14 @@ $questions = QuestionModel::getByQuiz($quiz_id, false);
 // Build CSV content
 $csv_lines = [];
 
-// Header row with quiz metadata
-$csv_lines[] = [
-    'TITLE',
-    'DESCRIPTION',
-    'DIFFICULTY',
-    'IS_COLLABORATIVE',
-    'QUESTION_TYPE',
-    'QUESTION_TEXT',
-    'OPTIONS',
-    'CORRECT_ANSWER',
-    'POINTS'
-];
+
 
 // Quiz metadata row (first data row)
 $csv_lines[] = [
     $quiz['title'],
     $quiz['description'] ?? '',
     $quiz['difficulty'] ?? 'medium',
-    $quiz['is_collaborative'] ? '1' : '0',
+    $quiz['is_collaborative'] ? 'TRUE' : 'FALSE',
     '', // Empty for metadata row
     '', // Empty for metadata row
     '', // Empty for metadata row
@@ -59,8 +48,20 @@ $csv_lines[] = [
     ''  // Empty for metadata row
 ];
 
+$csv_lines[] = [
+    'type',
+    'question_text' ,
+    'option1',
+    'option2',
+    'option3',
+    'option4',
+     'correct_answer',
+     'points'];
+
+
 // Question rows
-foreach ($questions as $q) {
+foreach ($questions as $q) 
+    {
     $options_str = '';
     if ($q['type'] === 'mcq' && $q['options_json']) {
         $options = json_decode($q['options_json'], true);
@@ -68,15 +69,17 @@ foreach ($questions as $q) {
             $options_str = implode('|', $options);
         }
     }
+
+    list($option1, $option2, $option3, $option4) = explode('|', $options_str);
+
     
     $csv_lines[] = [
-        '', // Empty for question rows (metadata already in row 2)
-        '', // Empty for question rows
-        '', // Empty for question rows
-        '', // Empty for question rows
         $q['type'],
         $q['question_text'],
-        $options_str,
+        $option1,
+        $option2,
+         $option3,
+        $option4,
         $q['correct_answer'],
         $q['points']
     ];
@@ -92,6 +95,7 @@ $csv_content = stream_get_contents($output);
 fclose($output);
 
 // Output CSV file
+ob_clean();          
 header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="quiz_' . $quiz_id . '_' . date('Y-m-d') . '.csv"');
 echo $csv_content;

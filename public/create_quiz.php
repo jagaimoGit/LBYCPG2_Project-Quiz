@@ -303,6 +303,7 @@ if ($quiz_id) {
             
             <div class="form-group">
                 <button type="submit" class="btn btn-primary"><?php echo $quiz ? 'Update Quiz' : 'Create Quiz'; ?></button>
+                 <button type="submit"  formaction="import_quiz.php" class="btn btn-primary" formnovalidate> Import Quiz</button>
                 <a href="index.php" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
