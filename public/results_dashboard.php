@@ -71,6 +71,19 @@ if ($is_host_test && isset($_SESSION['host_test_results'])) {
                                 <?php echo $answer_data['is_correct'] ? '✓ Correct' : '✗ Incorrect'; ?>
                             </span>
                         </div>
+                        <?php if (!empty($answer_data['question']['image_path'])): 
+                            $image_src = $answer_data['question']['image_path'];
+                            // Ensure path is correct for web access (relative to public directory)
+                            if (!preg_match('/^https?:\/\//', $image_src)) {
+                                $image_src = '../' . $image_src;
+                            }
+                        ?>
+                            <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                                <img src="<?php echo e($image_src); ?>" 
+                                     alt="Question diagram" 
+                                     style="max-width: 100%; max-height: 300px; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); display: block;">
+                            </div>
+                        <?php endif; ?>
                         <p><strong>Your Answer:</strong> <?php echo e($answer_data['answer_text']); ?></p>
                         <p><strong>Correct Answer:</strong> <?php echo e($answer_data['question']['correct_answer']); ?></p>
                         <p><strong>Points:</strong> <?php echo $answer_data['question']['points']; ?> (<?php echo $answer_data['is_correct'] ? 'Earned' : 'Not earned'; ?>)</p>
@@ -142,6 +155,11 @@ if ($attempt_id) {
                 <div style="text-align: center; padding: 2rem; background-color: #f8f9fa; border-radius: 8px; margin-bottom: 2rem;">
                     <h2 style="font-size: 3rem; margin-bottom: 0.5rem;"><?php echo $attempt['score']; ?> / <?php echo $total_points; ?></h2>
                     <p style="font-size: 1.2rem;"><?php echo round(($attempt['score'] / max($total_points, 1)) * 100, 1); ?>%</p>
+                    <?php 
+                    $time_duration = calculate_time_duration($attempt['started_at'], $attempt['completed_at']);
+                    $time_formatted = format_time_duration($time_duration);
+                    ?>
+                    <p style="font-size: 1.1rem; margin-top: 0.5rem;"><strong>Time:</strong> <?php echo e($time_formatted); ?></p>
                     <p>Completed: <?php echo date('Y-m-d H:i', strtotime($attempt['completed_at'])); ?></p>
                 </div>
                 
@@ -154,6 +172,19 @@ if ($attempt_id) {
                                 <?php echo $answer['is_correct'] ? '✓ Correct' : '✗ Incorrect'; ?>
                             </span>
                         </div>
+                        <?php if (!empty($answer['image_path'])): 
+                            $image_src = $answer['image_path'];
+                            // Ensure path is correct for web access (relative to public directory)
+                            if (!preg_match('/^https?:\/\//', $image_src)) {
+                                $image_src = '../' . $image_src;
+                            }
+                        ?>
+                            <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                                <img src="<?php echo e($image_src); ?>" 
+                                     alt="Question diagram" 
+                                     style="max-width: 100%; max-height: 300px; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); display: block;">
+                            </div>
+                        <?php endif; ?>
                         <p><strong>Your Answer:</strong> <?php echo e($answer['answer_text']); ?></p>
                         <p><strong>Correct Answer:</strong> <?php echo e($answer['correct_answer']); ?></p>
                         <p><strong>Points:</strong> <?php echo $answer['points']; ?> (<?php echo $answer['is_correct'] ? 'Earned' : 'Not earned'; ?>)</p>
@@ -161,7 +192,8 @@ if ($attempt_id) {
                 <?php endforeach; ?>
                 
                 <div style="margin-top: 2rem;">
-                    <a href="index.php" class="btn btn-primary">Back to Main</a>
+                    <a href="quiz_leaderboard.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn btn-primary" style="background: #FFD700; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700;">View Leaderboard</a>
+                    <a href="index.php" class="btn btn-secondary">Back to Main</a>
                 </div>
             </div>
         </div>
@@ -322,8 +354,15 @@ if ($quiz_id) {
     $page_title = 'Results Dashboard - ' . e($quiz['title']);
     ?>
     <div class="container">
-        <h1>Results Dashboard</h1>
-        <h2><?php echo e($quiz['title']); ?></h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+                <h1>Results Dashboard</h1>
+                <h2><?php echo e($quiz['title']); ?></h2>
+            </div>
+            <div>
+                <a href="quiz_leaderboard.php?quiz_id=<?php echo $quiz_id; ?>" class="btn btn-primary" style="background: #00D9FF; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700;">View Leaderboard</a>
+            </div>
+        </div>
         
         <div class="card">
             <div class="card-header">

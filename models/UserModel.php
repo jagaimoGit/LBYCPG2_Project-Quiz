@@ -95,4 +95,65 @@ class UserModel {
         }
         return null;
     }
+    
+    /**
+     * Get general leaderboard for all participants
+     * @param string $sort_by Sort by 'unique_quizzes', 'attempts', or 'avg_score' (default: 'avg_score')
+     * @param string $order Sort order 'asc' or 'desc' (default: 'desc')
+     * @param int $limit Maximum number of results (default: 100)
+     * @return array Array of leaderboard entries with user stats
+     */
+    public static function getGeneralLeaderboard($sort_by = 'avg_score', $order = 'desc', $limit = 100) {
+        $db = get_db();
+        
+        // Validate sort parameters
+        $sort_by = in_array($sort_by, ['unique_quizzes', 'attempts', 'avg_score']) ? $sort_by : 'avg_score';
+        $order = strtolower($order) === 'asc' ? 'ASC' : 'DESC';
+        $limit = max(1, min(1000, (int)$limit));
+        
+        // Build ORDER BY clause - use whitelist to prevent SQL injection
+        $order_by_map = [
+            'unique_quizzes' => 'unique_quizzes_count',
+            'attempts' => 'total_attempts',
+            'avg_score' => 'avg_percentage'
+        ];
+        $order_by_field = $order_by_map[$sort_by];
+        
+        // Validate order_by_field is safe (whitelist check)
+        if (!in_array($order_by_field, ['unique_quizzes_count', 'total_attempts', 'avg_percentage'])) {
+            $order_by_field = 'avg_percentage';
+        }
+        
+        $stmt = $db->prepare("
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                COUNT(DISTINCT a.quiz_id) as unique_quizzes_count,
+                COUNT(a.id) as total_attempts,
+                AVG(a.score * 100.0 / NULLIF(a.total_possible_points, 0)) as avg_percentage,
+                SUM(a.score) as total_score,
+                SUM(a.total_possible_points) as total_possible
+            FROM users u
+            LEFT JOIN quiz_attempts a ON u.id = a.user_id AND a.completed_at IS NOT NULL
+            WHERE u.role = 'participant'
+            GROUP BY u.id, u.name, u.email
+            HAVING total_attempts > 0
+            ORDER BY `$order_by_field` $order, u.name ASC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $leaderboard = [];
+        while ($row = $result->fetch_assoc()) {
+            $row['avg_percentage'] = $row['avg_percentage'] ? round((float)$row['avg_percentage'], 2) : 0;
+            $row['unique_quizzes_count'] = (int)$row['unique_quizzes_count'];
+            $row['total_attempts'] = (int)$row['total_attempts'];
+            $leaderboard[] = $row;
+        }
+        
+        return $leaderboard;
+    }
 }

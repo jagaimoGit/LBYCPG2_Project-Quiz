@@ -189,6 +189,20 @@ if (empty($questions)) {
                             <span style="color: #666; font-size: 0.9rem;">(<?php echo $question['points']; ?> point<?php echo $question['points'] != 1 ? 's' : ''; ?>)</span>
                         </div>
                         
+                        <?php if (!empty($question['image_path'])): 
+                            $image_src = $question['image_path'];
+                            // Ensure path is correct for web access (relative to public directory)
+                            if (!preg_match('/^https?:\/\//', $image_src)) {
+                                $image_src = '../' . $image_src;
+                            }
+                        ?>
+                            <div style="margin-top: 1rem; margin-bottom: 1rem;">
+                                <img src="<?php echo e($image_src); ?>" 
+                                     alt="Question diagram" 
+                                     style="max-width: 100%; max-height: 400px; border: 4px solid #1a1a1a; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); display: block;">
+                            </div>
+                        <?php endif; ?>
+                        
                         <?php if ($question['type'] === 'mcq'): 
                             $options = json_decode($question['options_json'], true);
                             if (is_array($options)):

@@ -107,6 +107,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['approve_question']) &
 
 // Handle question update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_question']) && $quiz_id) {
+    require_once __DIR__ . '/../includes/helpers.php';
+    
     $question_id = (int)($_POST['question_id'] ?? 0);
     $question_text = trim($_POST['question_text'] ?? '');
     $question_type = $_POST['question_type'] ?? 'mcq';
@@ -114,6 +116,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_question']) &&
     
     if (!require_field($question_text)) {
         $errors[] = 'Question text is required.';
+    }
+    
+    // Get existing question to check for existing image
+    $existing_question = QuestionModel::getById($question_id);
+    $existing_image_path = $existing_question['image_path'] ?? null;
+    
+    // Handle image upload/removal
+    $image_path = $existing_image_path; // Default: keep existing image
+    $remove_image = isset($_POST['remove_image']) && $_POST['remove_image'] == '1';
+    
+    if ($remove_image) {
+        // Delete existing image if remove checkbox is checked
+        if ($existing_image_path) {
+            delete_question_image($existing_image_path);
+        }
+        $image_path = null;
+    } elseif (isset($_FILES['question_image']) && $_FILES['question_image']['error'] === UPLOAD_ERR_OK) {
+        // Upload new image
+        $new_image_path = upload_question_image($_FILES['question_image'], $question_id);
+        if ($new_image_path === false) {
+            $errors[] = 'Failed to upload image. Please check file type and size (max 5MB).';
+        } else {
+            // Delete old image if new one is uploaded
+            if ($existing_image_path) {
+                delete_question_image($existing_image_path);
+            }
+            $image_path = $new_image_path;
+        }
     }
     
     if ($question_type === 'mcq') {
@@ -135,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_question']) &&
             $errors[] = 'Please select a correct option.';
         } else {
             $options_json = json_encode($options);
-            if (QuestionModel::update($question_id, $question_text, $options_json, $correct_option, $points, $question_type)) {
+            if (QuestionModel::update($question_id, $question_text, $options_json, $correct_option, $points, $question_type, $image_path)) {
                 $success = 'Question updated successfully!';
                 // Reload page to show updated question
                 header('Location: create_quiz.php?quiz_id=' . $quiz_id);
@@ -152,7 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_question']) &&
         if (!require_field($correct_answer)) {
             $errors[] = 'Correct answer is required.';
         } else {
-            if (QuestionModel::update($question_id, $question_text, null, $correct_answer, $points, $question_type)) {
+            if (QuestionModel::update($question_id, $question_text, null, $correct_answer, $points, $question_type, $image_path)) {
                 $success = 'Question updated successfully!';
                 // Reload page to show updated question
                 header('Location: create_quiz.php?quiz_id=' . $quiz_id);
@@ -174,6 +204,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_question']) && $
         $errors[] = 'Question text is required.';
     }
     
+    // Handle image upload
+    $image_path = null;
+    if (isset($_FILES['question_image']) && $_FILES['question_image']['error'] === UPLOAD_ERR_OK) {
+        require_once __DIR__ . '/../includes/helpers.php';
+        $image_path = upload_question_image($_FILES['question_image']);
+        if ($image_path === false) {
+            $errors[] = 'Failed to upload image. Please check file type and size (max 5MB).';
+        }
+    }
+    
     if ($question_type === 'mcq') {
         $options = [];
         $correct_option = '';
@@ -193,7 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_question']) && $
             $errors[] = 'Please select a correct option.';
         } else {
             $options_json = json_encode($options);
-            if (QuestionModel::create($quiz_id, $current_user['id'], 'mcq', $question_text, $options_json, $correct_option, $points, true)) {
+            if (QuestionModel::create($quiz_id, $current_user['id'], 'mcq', $question_text, $options_json, $correct_option, $points, true, $image_path)) {
                 $success = 'Question added successfully!';
             } else {
                 $errors[] = 'Failed to add question.';
@@ -204,7 +244,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_question']) && $
         if (!require_field($correct_answer)) {
             $errors[] = 'Correct answer is required for enumeration.';
         } else {
-            if (QuestionModel::create($quiz_id, $current_user['id'], 'enum', $question_text, null, $correct_answer, $points, true)) {
+            if (QuestionModel::create($quiz_id, $current_user['id'], 'enum', $question_text, null, $correct_answer, $points, true, $image_path)) {
                 $success = 'Question added successfully!';
             } else {
                 $errors[] = 'Failed to add question.';
@@ -215,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_question']) && $
         if (!require_field($correct_answer)) {
             $errors[] = 'Correct answer is required for identification.';
         } else {
-            if (QuestionModel::create($quiz_id, $current_user['id'], 'identification', $question_text, null, $correct_answer, $points, true)) {
+            if (QuestionModel::create($quiz_id, $current_user['id'], 'identification', $question_text, null, $correct_answer, $points, true, $image_path)) {
                 $success = 'Question added successfully!';
             } else {
                 $errors[] = 'Failed to add question.';
@@ -371,7 +411,7 @@ if ($quiz_id) {
             
             <!-- Add New Question Form -->
                 <h3>Add New Question</h3>
-                <form method="POST" action="">
+                <form method="POST" action="" enctype="multipart/form-data">
                     <input type="hidden" name="save_question" value="1">
                     
                     <div class="form-group">
@@ -421,6 +461,12 @@ if ($quiz_id) {
                     </div>
                     
                     <div class="form-group">
+                        <label for="question_image">Question Image (Optional)</label>
+                        <input type="file" id="question_image" name="question_image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                        <small style="color: #666;">Max size: 5MB. Supported: JPG, PNG, GIF, WebP</small>
+                    </div>
+                    
+                    <div class="form-group">
                         <button type="submit" class="btn btn-primary">Add Question</button>
                     </div>
                 </form>
@@ -429,14 +475,14 @@ if ($quiz_id) {
 </div>
 
 <!-- Edit Question Modal -->
-<div id="editQuestionModal" class="modal" style="display: none;">
+<div id="editQuestionModal" class="modal hidden">
     <div class="modal-overlay" onclick="closeEditModal()"></div>
     <div class="modal-content">
         <div class="modal-header">
             <h2>Edit Question</h2>
             <button type="button" class="modal-close" onclick="closeEditModal()">&times;</button>
         </div>
-        <form method="POST" action="" id="editQuestionForm">
+        <form method="POST" action="" id="editQuestionForm" enctype="multipart/form-data">
             <input type="hidden" name="update_question" value="1">
             <input type="hidden" name="question_id" id="modal_question_id">
             
@@ -484,6 +530,18 @@ if ($quiz_id) {
             <div class="form-group">
                 <label for="modal_points">Points</label>
                 <input type="number" id="modal_points" name="points" min="1" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="modal_question_image">Question Image (Optional)</label>
+                <input type="file" id="modal_question_image" name="question_image" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp">
+                <small style="color: #666;">Max size: 5MB. Supported: JPG, PNG, GIF, WebP</small>
+                <div id="modal_current_image" style="margin-top: 0.5rem; display: none;">
+                    <img id="modal_image_preview" src="" alt="Current image" style="max-width: 300px; max-height: 200px; border: 3px solid #1a1a1a; display: block; margin-bottom: 0.5rem;">
+                    <small style="display: block; margin-bottom: 0.5rem;">Current image. Upload a new one to replace.</small>
+                    <input type="hidden" id="modal_remove_image" name="remove_image" value="0">
+                    <button type="button" id="modal_remove_image_btn" class="btn btn-small" style="background: #FF3366; border: 3px solid #1a1a1a; color: #fff; font-weight: 700; padding: 0.5rem 1rem;" onclick="removeImage()">Remove Image</button>
+                </div>
             </div>
             
             <div class="form-group">
@@ -573,12 +631,44 @@ function openEditModal(question) {
     // Show appropriate fields
     toggleModalQuestionType();
     
+    // Handle image preview
+    const currentImageDiv = document.getElementById('modal_current_image');
+    const imagePreview = document.getElementById('modal_image_preview');
+    const removeImageHidden = document.getElementById('modal_remove_image');
+    const removeImageBtn = document.getElementById('modal_remove_image_btn');
+    
+    if (question.image_path) {
+        // Ensure path is correct for web access
+        imagePreview.src = question.image_path.startsWith('http') ? question.image_path : '../' + question.image_path;
+        currentImageDiv.style.display = 'block';
+        removeImageHidden.value = '0';
+        removeImageBtn.style.display = 'inline-block';
+    } else {
+        currentImageDiv.style.display = 'none';
+        imagePreview.src = '';
+        removeImageHidden.value = '0';
+    }
+    
     // Show modal
-    document.getElementById('editQuestionModal').style.display = 'flex';
+    document.getElementById('editQuestionModal').classList.remove('hidden');
+}
+
+function removeImage() {
+    const removeImageHidden = document.getElementById('modal_remove_image');
+    const imagePreview = document.getElementById('modal_image_preview');
+    const currentImageDiv = document.getElementById('modal_current_image');
+    const removeImageBtn = document.getElementById('modal_remove_image_btn');
+    
+    if (confirm('Are you sure you want to remove this image?')) {
+        removeImageHidden.value = '1';
+        imagePreview.style.display = 'none';
+        removeImageBtn.style.display = 'none';
+        currentImageDiv.querySelector('small').textContent = 'Image will be removed when you save.';
+    }
 }
 
 function closeEditModal() {
-    document.getElementById('editQuestionModal').style.display = 'none';
+    document.getElementById('editQuestionModal').classList.add('hidden');
 }
 
 function toggleModalQuestionType() {

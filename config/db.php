@@ -92,6 +92,7 @@ function setup_database($mysqli) {
         correct_answer TEXT NOT NULL,
         points INT NOT NULL DEFAULT 1,
         is_approved TINYINT(1) NOT NULL DEFAULT 1,
+        image_path VARCHAR(255) DEFAULT NULL,
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
         FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -217,5 +218,11 @@ function add_missing_columns($mysqli) {
     $result = $mysqli->query("SHOW COLUMNS FROM quizzes LIKE 'average_rating'");
     if ($result->num_rows == 0) {
         $mysqli->query("ALTER TABLE quizzes ADD COLUMN average_rating DECIMAL(3,2) DEFAULT NULL AFTER difficulty");
+    }
+    
+    // Check if image_path column exists in questions table
+    $result = $mysqli->query("SHOW COLUMNS FROM questions LIKE 'image_path'");
+    if ($result->num_rows == 0) {
+        $mysqli->query("ALTER TABLE questions ADD COLUMN image_path VARCHAR(255) DEFAULT NULL AFTER is_approved");
     }
 }

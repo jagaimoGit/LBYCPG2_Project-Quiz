@@ -99,3 +99,102 @@ function generate_access_code($length = 8) {
 function normalize_enum_answer($answer) {
     return strtolower(trim(preg_replace('/\s+/', ' ', $answer)));
 }
+
+/**
+ * Handle image upload for questions
+ * @param array $file $_FILES array element
+ * @param int $question_id Question ID (for unique naming)
+ * @return string|false Image path on success, false on failure
+ */
+function upload_question_image($file, $question_id = null) {
+    if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
+        return false;
+    }
+    
+    // Validate file type
+    $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    
+    if (!in_array($mime_type, $allowed_types)) {
+        return false;
+    }
+    
+    // Validate file size (max 5MB)
+    if ($file['size'] > 5 * 1024 * 1024) {
+        return false;
+    }
+    
+    // Create uploads directory if it doesn't exist
+    $upload_dir = __DIR__ . '/../uploads/question_images/';
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+    
+    // Generate unique filename
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = 'q_' . ($question_id ? $question_id . '_' : '') . time() . '_' . uniqid() . '.' . $extension;
+    $filepath = $upload_dir . $filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $filepath)) {
+        return 'uploads/question_images/' . $filename;
+    }
+    
+    return false;
+}
+
+/**
+ * Delete question image file
+ * @param string $image_path Path to image
+ * @return bool Success status
+ */
+function delete_question_image($image_path) {
+    if ($image_path && file_exists(__DIR__ . '/../' . $image_path)) {
+        return unlink(__DIR__ . '/../' . $image_path);
+    }
+    return true; // Return true if file doesn't exist (already deleted)
+}
+
+/**
+ * Format time duration in seconds to human-readable format
+ * @param int $seconds Time in seconds
+ * @return string Formatted time (MM:SS or HH:MM:SS)
+ */
+function format_time_duration($seconds) {
+    if ($seconds === null || $seconds < 0) {
+        return 'N/A';
+    }
+    
+    $hours = floor($seconds / 3600);
+    $minutes = floor(($seconds % 3600) / 60);
+    $secs = $seconds % 60;
+    
+    if ($hours > 0) {
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+    } else {
+        return sprintf('%d:%02d', $minutes, $secs);
+    }
+}
+
+/**
+ * Calculate time duration between two timestamps
+ * @param string $start Start timestamp
+ * @param string $end End timestamp
+ * @return int|null Duration in seconds, or null if invalid
+ */
+function calculate_time_duration($start, $end) {
+    if (empty($start) || empty($end)) {
+        return null;
+    }
+    
+    $start_time = strtotime($start);
+    $end_time = strtotime($end);
+    
+    if ($start_time === false || $end_time === false || $end_time < $start_time) {
+        return null;
+    }
+    
+    return $end_time - $start_time;
+}

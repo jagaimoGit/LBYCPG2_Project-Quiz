@@ -159,8 +159,9 @@ $is_host = is_host();
                                     </div>
                                 </div>
                             </div>
-                            <div style="margin-top: auto; padding-top: 1rem;">
+                            <div style="margin-top: auto; padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                                 <button type="button" onclick="showHostQuizWarning(<?php echo $quiz['id']; ?>)" class="btn btn-primary" style="width: 100%; text-align: center;">Test Quiz</button>
+                                <a href="quiz_leaderboard.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn" style="width: 100%; text-align: center; background: #FFD700; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700; display: flex; justify-content: center; align-items: center;">View Leaderboard</a>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -230,12 +231,13 @@ $is_host = is_host();
                                     </div>
                                 </div>
                             </div>
-                            <div style="margin-top: auto; padding-top: 1rem;">
+                            <div style="margin-top: auto; padding-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
                                 <?php if ($is_host): ?>
                                     <button type="button" onclick="showHostQuizWarning(<?php echo $quiz['id']; ?>)" class="btn btn-primary" style="width: 100%; text-align: center;">Test Quiz</button>
                                 <?php else: ?>
                                     <a href="play_quiz.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn btn-primary" style="width: 100%; text-align: center;">Start Quiz</a>
                                 <?php endif; ?>
+                                <a href="quiz_leaderboard.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn" style="width: 100%; text-align: center; background: #FFD700; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700; display: flex; justify-content: center; align-items: center;">View Leaderboard</a>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -266,35 +268,51 @@ $is_host = is_host();
         
         <!-- Previous Attempts -->
         <?php
-        $attempts = AttemptModel::getByUser($current_user['id']);
-        if (!empty($attempts)):
+        $all_attempts = AttemptModel::getByUser($current_user['id']);
+        $display_attempts = array_slice($all_attempts, 0, 5);
+        $has_more = count($all_attempts) > 5;
+        if (!empty($display_attempts)):
         ?>
             <div class="card mt-3">
-                <div class="card-header">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h2>My Previous Attempts</h2>
+                    <?php if ($has_more): ?>
+                        <a href="quiz_history.php" class="btn btn-secondary" style="background: #00D9FF; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700;">View All</a>
+                    <?php endif; ?>
                 </div>
                 <table class="table">
                     <thead>
                         <tr>
                             <th>Quiz</th>
                             <th>Score</th>
+                            <th>Time</th>
                             <th>Completed</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($attempts as $attempt): ?>
+                        <?php foreach ($display_attempts as $attempt): 
+                            $time_duration = calculate_time_duration($attempt['started_at'] ?? null, $attempt['completed_at'] ?? null);
+                            $time_formatted = format_time_duration($time_duration);
+                        ?>
                             <tr>
                                 <td><?php echo e($attempt['quiz_title']); ?></td>
                                 <td><strong><?php echo $attempt['score']; ?></strong></td>
+                                <td><?php echo e($time_formatted); ?></td>
                                 <td><?php echo date('Y-m-d H:i', strtotime($attempt['completed_at'])); ?></td>
                                 <td>
                                     <a href="results_dashboard.php?attempt_id=<?php echo $attempt['id']; ?>" class="btn btn-small btn-primary">View Results</a>
+                                    <a href="quiz_leaderboard.php?quiz_id=<?php echo $attempt['quiz_id']; ?>" class="btn btn-small" style="background: #FFD700; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700; margin-left: 0.5rem;">Leaderboard</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+                <?php if ($has_more): ?>
+                    <div style="padding: 1rem; text-align: center; border-top: 4px solid #1a1a1a;">
+                        <a href="quiz_history.php" class="btn btn-primary">View All History (<?php echo count($all_attempts); ?> total)</a>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     <?php endif; ?>

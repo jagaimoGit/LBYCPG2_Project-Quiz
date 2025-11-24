@@ -54,13 +54,14 @@ class QuestionModel {
      * @param string $correct_answer Correct answer
      * @param int $points Points for this question
      * @param bool $is_approved Whether question is approved (default: true)
+     * @param string|null $image_path Path to question image (optional)
      * @return int|false New question ID or false on failure
      */
-    public static function create($quiz_id, $created_by_user_id, $type, $question_text, $options_json, $correct_answer, $points = 1, $is_approved = true) {
+    public static function create($quiz_id, $created_by_user_id, $type, $question_text, $options_json, $correct_answer, $points = 1, $is_approved = true, $image_path = null) {
         $db = get_db();
-        $stmt = $db->prepare("INSERT INTO questions (quiz_id, created_by_user_id, type, question_text, options_json, correct_answer, points, is_approved) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO questions (quiz_id, created_by_user_id, type, question_text, options_json, correct_answer, points, is_approved, image_path) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $is_app = $is_approved ? 1 : 0;
-        $stmt->bind_param("iissssii", $quiz_id, $created_by_user_id, $type, $question_text, $options_json, $correct_answer, $points, $is_app);
+        $stmt->bind_param("iissssiis", $quiz_id, $created_by_user_id, $type, $question_text, $options_json, $correct_answer, $points, $is_app, $image_path);
         
         if ($stmt->execute()) {
             return $db->insert_id;
@@ -78,16 +79,17 @@ class QuestionModel {
      * @param string $correct_answer Correct answer
      * @param int $points Points for this question
      * @param string|null $type Question type (optional, for changing type)
+     * @param string|null $image_path Path to question image (optional, null to keep existing)
      * @return bool Success status
      */
-    public static function update($id, $question_text, $options_json, $correct_answer, $points, $type = null) {
+    public static function update($id, $question_text, $options_json, $correct_answer, $points, $type = null, $image_path = null) {
         $db = get_db();
         if ($type !== null) {
-            $stmt = $db->prepare("UPDATE questions SET type = ?, question_text = ?, options_json = ?, correct_answer = ?, points = ? WHERE id = ?");
-            $stmt->bind_param("ssssii", $type, $question_text, $options_json, $correct_answer, $points, $id);
+            $stmt = $db->prepare("UPDATE questions SET type = ?, question_text = ?, options_json = ?, correct_answer = ?, points = ?, image_path = ? WHERE id = ?");
+            $stmt->bind_param("ssssiss", $type, $question_text, $options_json, $correct_answer, $points, $image_path, $id);
         } else {
-            $stmt = $db->prepare("UPDATE questions SET question_text = ?, options_json = ?, correct_answer = ?, points = ? WHERE id = ?");
-            $stmt->bind_param("sssii", $question_text, $options_json, $correct_answer, $points, $id);
+            $stmt = $db->prepare("UPDATE questions SET question_text = ?, options_json = ?, correct_answer = ?, points = ?, image_path = ? WHERE id = ?");
+            $stmt->bind_param("sssiss", $question_text, $options_json, $correct_answer, $points, $image_path, $id);
         }
         
         if ($stmt->execute()) {
@@ -104,7 +106,16 @@ class QuestionModel {
      * @return bool Success status
      */
     public static function delete($id) {
+        require_once __DIR__ . '/../includes/helpers.php';
+        
         $db = get_db();
+        
+        // Get image path before deleting
+        $question = self::getById($id);
+        if ($question && !empty($question['image_path'])) {
+            delete_question_image($question['image_path']);
+        }
+        
         $stmt = $db->prepare("DELETE FROM questions WHERE id = ?");
         $stmt->bind_param("i", $id);
         

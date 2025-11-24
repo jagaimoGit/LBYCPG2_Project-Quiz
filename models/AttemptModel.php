@@ -61,7 +61,7 @@ class AttemptModel {
      */
     public static function getByUser($user_id) {
         $db = get_db();
-        $stmt = $db->prepare("SELECT a.*, q.title as quiz_title FROM quiz_attempts a LEFT JOIN quizzes q ON a.quiz_id = q.id WHERE a.user_id = ? ORDER BY a.completed_at DESC");
+        $stmt = $db->prepare("SELECT a.*, q.title as quiz_title, q.difficulty as quiz_difficulty FROM quiz_attempts a LEFT JOIN quizzes q ON a.quiz_id = q.id WHERE a.user_id = ? ORDER BY a.completed_at DESC");
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -145,7 +145,7 @@ class AttemptModel {
      */
     public static function getAnswersByAttempt($attempt_id) {
         $db = get_db();
-        $stmt = $db->prepare("SELECT qa.*, q.question_text, q.type, q.correct_answer, q.points FROM quiz_answers qa LEFT JOIN questions q ON qa.question_id = q.id WHERE qa.attempt_id = ? ORDER BY q.id ASC");
+        $stmt = $db->prepare("SELECT qa.*, q.question_text, q.type, q.correct_answer, q.points, q.image_path FROM quiz_answers qa LEFT JOIN questions q ON qa.question_id = q.id WHERE qa.attempt_id = ? ORDER BY q.id ASC");
         $stmt->bind_param("i", $attempt_id);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -232,5 +232,69 @@ class AttemptModel {
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
         return (int)$row['count'];
+    }
+    
+    /**
+     * Get leaderboard for a specific quiz
+     * @param int $quiz_id Quiz ID
+     * @param string $sort_by Sort by 'score' or 'time' (default: 'score')
+     * @param string $order Sort order 'asc' or 'desc' (default: 'desc')
+     * @param int $limit Maximum number of results (default: 100)
+     * @return array Array of leaderboard entries with user info, score, percentage, and time
+     */
+    public static function getQuizLeaderboard($quiz_id, $sort_by = 'score', $order = 'desc', $limit = 100) {
+        $db = get_db();
+        
+        // Validate sort parameters
+        $sort_by = in_array($sort_by, ['score', 'time']) ? $sort_by : 'score';
+        $order = strtolower($order) === 'asc' ? 'ASC' : 'DESC';
+        $limit = max(1, min(1000, (int)$limit));
+        
+        // Calculate time in seconds (duration between started_at and completed_at)
+        if ($sort_by === 'time') {
+            $order_by = "TIMESTAMPDIFF(SECOND, a.started_at, a.completed_at) $order";
+        } else {
+            $order_by = "a.score $order, TIMESTAMPDIFF(SECOND, a.started_at, a.completed_at) ASC";
+        }
+        
+        $stmt = $db->prepare("
+            SELECT 
+                a.id,
+                a.user_id,
+                u.name as user_name,
+                u.email as user_email,
+                a.score,
+                a.total_possible_points,
+                ROUND((a.score * 100.0 / NULLIF(a.total_possible_points, 0)), 2) as percentage,
+                TIMESTAMPDIFF(SECOND, a.started_at, a.completed_at) as time_seconds,
+                a.completed_at
+            FROM quiz_attempts a
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.quiz_id = ? AND a.completed_at IS NOT NULL
+            ORDER BY $order_by
+            LIMIT ?
+        ");
+        $stmt->bind_param("ii", $quiz_id, $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $leaderboard = [];
+        while ($row = $result->fetch_assoc()) {
+            // Format time as MM:SS or HH:MM:SS
+            $time_seconds = (int)$row['time_seconds'];
+            $hours = floor($time_seconds / 3600);
+            $minutes = floor(($time_seconds % 3600) / 60);
+            $seconds = $time_seconds % 60;
+            
+            if ($hours > 0) {
+                $row['time_formatted'] = sprintf('%d:%02d:%02d', $hours, $minutes, $seconds);
+            } else {
+                $row['time_formatted'] = sprintf('%d:%02d', $minutes, $seconds);
+            }
+            
+            $leaderboard[] = $row;
+        }
+        
+        return $leaderboard;
     }
 }

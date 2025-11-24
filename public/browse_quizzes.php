@@ -156,12 +156,13 @@ $total_pages = ceil($total_quizzes / $per_page);
                             <?php endif; ?>
                         </div>
                     </div>
-                    <div style="flex-shrink: 0;">
+                    <div style="flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5rem;">
                         <?php if ($is_host): ?>
                             <button type="button" onclick="showHostQuizWarning(<?php echo $quiz['id']; ?>)" class="btn btn-primary" style="white-space: nowrap;">Test Quiz</button>
                         <?php else: ?>
                             <a href="play_quiz.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn btn-primary" style="white-space: nowrap;">Start Quiz</a>
                         <?php endif; ?>
+                        <a href="quiz_leaderboard.php?quiz_id=<?php echo $quiz['id']; ?>" class="btn btn-secondary" style="white-space: nowrap; background: #FFD700; border: 3px solid #1a1a1a; color: #1a1a1a; font-weight: 700;">View Leaderboard</a>
                     </div>
                 </div>
             <?php endforeach; ?>
